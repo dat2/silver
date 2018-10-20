@@ -45,6 +45,21 @@ instance Show Type where
     show (TyInt32) = "Int32"
     show (TyArrow a b) = show a ++ " -> " ++ show b
 
+-- | Binding of a name to a variable
+data Bind
+    = NonRecursive Id
+                   Type
+                   Expr
+    | Recursive [(Id, Type, Expr)]
+    deriving (Eq)
+
+instance Show Bind where
+    show (NonRecursive name ty e) = showBinding (name, ty, e)
+    show (Recursive bs) = intercalate "\n" $ map showBinding bs
+
+showBinding :: (Id, Type, Expr) -> String
+showBinding (name, ty, e) = show name ++ " :: " ++ show ty ++ " = " ++ show e
+
 -- | The core lambda calculus
 data Expr
     = Var Id
@@ -53,6 +68,8 @@ data Expr
           Expr
     | Lam Id
           Type
+          Expr
+    | Let Bind
           Expr
     deriving (Eq)
 
@@ -68,17 +85,7 @@ instance Show Expr where
         alg (AppF l r) = "(" ++ l ++ " " ++ r ++ ")"
         alg (LamF v t b) =
             "(\\" ++ (show v) ++ " :: " ++ show t ++ " -> " ++ b ++ ")"
-
--- | Top Level binding
-data Bind =
-    Bind Id
-         Type
-         Expr
-    deriving (Eq)
-
-instance Show Bind where
-    show (Bind name ty e) =
-        "let " ++ show name ++ " :: " ++ show ty ++ " = " ++ show e
+        alg (LetF b e) = "let " ++ show b ++ " in " ++ e
 
 -- | Top Level Program
 type Program = [Bind]
