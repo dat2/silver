@@ -43,18 +43,25 @@ tyInt32 = TyCon (Id "Int32")
 -- | Binding of a name to a variable
 data Bind
     = NonRecursive Id
-                   Type
                    Expr
-    | Recursive [(Id, Type, Expr)]
+    | Recursive [(Id, Expr)]
     deriving (Eq, Show)
 
-letn :: String -> Type -> Expr -> Bind
+letn :: String -> Expr -> Bind
 letn s = NonRecursive (Id s)
 
-letrec :: [(String, Type, Expr)] -> Bind
+letrec :: [(String, Expr)] -> Bind
 letrec = Recursive . map f
   where
-    f (s, t, e) = (Id s, t, e)
+    f (s, e) = (Id s, e)
+
+-- | Case Alternatives
+data AltKind
+    = Constant Literal
+    | Constructor [Id]
+    deriving (Eq, Show)
+
+type Alt = (AltKind, Expr)
 
 -- | The core lambda calculus
 data Expr
@@ -67,6 +74,8 @@ data Expr
           Expr
     | Let Bind
           Expr
+    | Case Expr
+           [Alt]
     deriving (Eq, Show)
 
 makeBaseFunctor ''Expr
