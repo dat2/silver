@@ -5,13 +5,16 @@
 {-# LANGUAGE DeriveTraversable #-}
 
 module Core
-    ( Expr(..)
-    , ExprF(..)
+    ( Program
     , Bind(..)
-    , Program
+    , letn
+    , letrec
+    , Expr(..)
+    , ExprF(..)
     , Id(..)
     , Literal(..)
     , Type(..)
+    , tyInt32
     ) where
 
 import Data.Functor.Foldable (Base, Recursive(..))
@@ -21,29 +24,21 @@ import Data.List (intercalate)
 -- Identifiers
 newtype Id =
     Id String
-    deriving (Eq)
-
-instance Show Id where
-    show (Id s) = s
+    deriving (Eq, Show)
 
 -- | Literals
 data Literal =
-    LInt32 Int
-    deriving (Eq)
-
-instance Show Literal where
-    show (LInt32 l) = show l
+    LInt Int
+    deriving (Eq, Show)
 
 -- | Types
 data Type
-    = TyInt32
-    | TyArrow Type
-              Type
-    deriving (Eq)
+    = TyCon Id
+    | Type :-> Type
+    deriving (Eq, Show)
 
-instance Show Type where
-    show (TyInt32) = "Int32"
-    show (TyArrow a b) = show a ++ " -> " ++ show b
+tyInt32 :: Type
+tyInt32 = TyCon (Id "Int32")
 
 -- | Binding of a name to a variable
 data Bind
@@ -51,14 +46,15 @@ data Bind
                    Type
                    Expr
     | Recursive [(Id, Type, Expr)]
-    deriving (Eq)
+    deriving (Eq, Show)
 
-instance Show Bind where
-    show (NonRecursive name ty e) = showBinding (name, ty, e)
-    show (Recursive bs) = intercalate "\n" $ map showBinding bs
+letn :: String -> Type -> Expr -> Bind
+letn s = NonRecursive (Id s)
 
-showBinding :: (Id, Type, Expr) -> String
-showBinding (name, ty, e) = show name ++ " :: " ++ show ty ++ " = " ++ show e
+letrec :: [(String, Type, Expr)] -> Bind
+letrec = Recursive . map f
+  where
+    f (s, t, e) = (Id s, t, e)
 
 -- | The core lambda calculus
 data Expr
@@ -71,21 +67,9 @@ data Expr
           Expr
     | Let Bind
           Expr
-    deriving (Eq)
+    deriving (Eq, Show)
 
 makeBaseFunctor ''Expr
-
-instance Show Expr where
-    show = cata alg
-      where
-        alg :: Base Expr String -> String
-        alg (VarF s) = show s
-        alg (LitF i) = show i
-        -- recursive cases
-        alg (AppF l r) = "(" ++ l ++ " " ++ r ++ ")"
-        alg (LamF v t b) =
-            "(\\" ++ (show v) ++ " :: " ++ show t ++ " -> " ++ b ++ ")"
-        alg (LetF b e) = "let " ++ show b ++ " in " ++ e
 
 -- | Top Level Program
 type Program = [Bind]
