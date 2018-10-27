@@ -3,17 +3,15 @@
 module Main where
 
 import Core
-import Id
+import Name
 import Types
 
 exampleProgram :: Program
 exampleProgram =
-    [ NonRec
-          (Variable "main" (tyInt32 `tyFn` tyInt32))
-          (Lam (Variable "x" tyInt32) (Var "x"))
+    [ NonRec (Id "main" (int32 `fn` int32)) (Lam (Id "x" int32) (Var "x"))
     , NonRec
-          (Variable "other" (tyInt32 `tyFn` tyInt32))
-          (Let (NonRec (Variable "x" tyInt32) (Lit (LInt 5))) (Var "x"))
+          (Id "other" (int32 `fn` int32))
+          (Let (NonRec (Id "x" int32) (Lit (LitInt 5))) (Var "x"))
     ]
 
 main :: IO ()

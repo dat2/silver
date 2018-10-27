@@ -1,32 +1,32 @@
 module Core
     ( Program
     , Bind(..)
-    , Variable(..)
+    , Var(..)
     , Literal(..)
     , Expr(..)
     , CaseAlt(..)
     ) where
 
 import Data.List (intercalate)
-import Id
+import Name
 import Types
 
--- | A connection of an Id and a Type
-data Variable =
-    Variable Id
-             Type
-    deriving (Eq, Show)
+-- | A connection of an Name and a Type
+data Var = Id
+    { varName :: Name
+    , varType :: Type
+    } deriving (Eq, Show)
 
 -- | Literals
 data Literal =
-    LInt Int
+    LitInt Int
     deriving (Eq, Show)
 
 -- | Binding of a name to a variable
 data Bind
-    = NonRec Variable
+    = NonRec Var
              Expr
-    | Rec [(Variable, Expr)]
+    | Rec [(Var, Expr)]
     deriving (Eq, Show)
 
 -- | Top Level Program
@@ -35,15 +35,15 @@ type Program = [Bind]
 -- | The core lambda calculus
 -- Lam is both Λ and λ, that is both types and vars.
 data Expr
-    = Var Id
+    = Var Name
     | Lit Literal
     | App Expr
           Expr
-    | Lam Variable
+    | Lam Var
           Expr
     | Let Bind
           Expr
-    | Case Variable
+    | Case Var
            Expr
            [Alt]
     | Type Type
@@ -53,7 +53,7 @@ data Expr
 -- TODO: need to determine data constructor types
 data CaseAlt
     = Constant Literal
-    | Constructor [Variable]
+    | Constructor [Var]
     deriving (Eq, Show)
 
 type Alt = (CaseAlt, Expr)

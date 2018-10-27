@@ -3,12 +3,13 @@
 module Types
     ( Type(..)
     , Kind(..)
-    , tyInt32
-    , tyArrow
-    , tyFn
+    , int32
+    , arrow
+    , fn
+    , tvar
     ) where
 
-import Id
+import Name
 
 -- | Kinds
 data Kind
@@ -19,13 +20,13 @@ data Kind
 
 -- | TypeConstants
 data TyCon =
-    TyCon Id
+    TyCon Name
           Kind
     deriving (Eq, Show)
 
 -- | Type Variables
 data TyVar =
-    TyVar Id
+    TyVar Name
           Kind
     deriving (Eq, Show)
 
@@ -37,13 +38,16 @@ data Type
            Type
     deriving (Eq, Show)
 
-tyInt32 :: Type
-tyInt32 = TCon $ TyCon "Int32" Star
+int32 :: Type
+int32 = TCon $ TyCon "Int32" Star
 
-tyArrow :: Type
-tyArrow = TCon $ TyCon "(->)" (KFun Star Star)
+arrow :: Type
+arrow = TCon $ TyCon "(->)" (KFun Star Star)
 
-tyFn :: Type -> Type -> Type
-a `tyFn` b = TApp (TApp tyArrow a) b
+fn :: Type -> Type -> Type
+a `fn` b = TApp (TApp arrow a) b
 
-infixr 4 `tyFn`
+tvar :: Name -> TyVar
+tvar i = TyVar i Star
+
+infixr 4 `fn`
