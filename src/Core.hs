@@ -1,29 +1,20 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveFoldable #-}
-{-# LANGUAGE DeriveTraversable #-}
-
 module Core
     ( Program
     , Bind(..)
-    , letn
-    , letrec
-    , Expr(..)
-    , ExprF(..)
-    , Id(..)
+    , Variable(..)
     , Literal(..)
-    , Type(..)
-    , tyInt32
+    , Expr(..)
+    , CaseAlt(..)
     ) where
 
-import Data.Functor.Foldable (Base, Recursive(..))
-import Data.Functor.Foldable.TH (makeBaseFunctor)
 import Data.List (intercalate)
+import Id
+import Types
 
--- Identifiers
-newtype Id =
-    Id String
+-- | A connection of an Id and a Type
+data Variable =
+    Variable Id
+             Type
     deriving (Eq, Show)
 
 -- | Literals
@@ -31,54 +22,38 @@ data Literal =
     LInt Int
     deriving (Eq, Show)
 
--- | Types
-data Type
-    = TyCon Id
-    | Type :-> Type
-    deriving (Eq, Show)
-
-tyInt32 :: Type
-tyInt32 = TyCon (Id "Int32")
-
 -- | Binding of a name to a variable
 data Bind
-    = NonRecursive Id
-                   Expr
-    | Recursive [(Id, Expr)]
+    = NonRec Variable
+             Expr
+    | Rec [(Variable, Expr)]
     deriving (Eq, Show)
 
-letn :: String -> Expr -> Bind
-letn s = NonRecursive (Id s)
-
-letrec :: [(String, Expr)] -> Bind
-letrec = Recursive . map f
-  where
-    f (s, e) = (Id s, e)
-
--- | Case Alternatives
-data AltKind
-    = Constant Literal
-    | Constructor [Id]
-    deriving (Eq, Show)
-
-type Alt = (AltKind, Expr)
+-- | Top Level Program
+type Program = [Bind]
 
 -- | The core lambda calculus
+-- Lam is both Λ and λ, that is both types and vars.
 data Expr
     = Var Id
     | Lit Literal
     | App Expr
           Expr
-    | Lam Id
-          Type
+    | Lam Variable
           Expr
     | Let Bind
           Expr
-    | Case Expr
+    | Case Variable
+           Expr
            [Alt]
+    | Type Type
     deriving (Eq, Show)
 
-makeBaseFunctor ''Expr
+-- | Case Alternatives
+-- TODO: need to determine data constructor types
+data CaseAlt
+    = Constant Literal
+    | Constructor [Variable]
+    deriving (Eq, Show)
 
--- | Top Level Program
-type Program = [Bind]
+type Alt = (CaseAlt, Expr)
