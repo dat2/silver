@@ -1,32 +1,17 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
-import JIT
-
 import qualified Data.Text.Lazy.IO as T
-import LLVM.AST (Module)
-import LLVM.AST.Name (Name(..))
-import LLVM.AST.Type (i32)
-import LLVM.IRBuilder.Constant (int32)
-import LLVM.IRBuilder.Instruction (ret)
-import LLVM.IRBuilder.Module (buildModule, function)
+import JIT
 import LLVM.Pretty (ppllvm)
+import STG
+import STGCodeGen
 
-testModule :: Module
-testModule = buildModule "anonymous" builder
-  where
-    builder = do
-        function
-            (Name "main")
-            []
-            i32
-            (\_ -> do
-                 zero <- int32 0
-                 ret zero)
+testProg =
+    Prog [Binding "main" (LambdaForm [] NonUpdateable [] (Lit (LInt32 0)))]
 
 main :: IO ()
 main = do
+    let testModule = codegen testProg
     T.putStrLn (ppllvm testModule)
     r <- jit testModule
     print r
